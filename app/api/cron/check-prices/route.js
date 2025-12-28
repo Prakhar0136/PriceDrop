@@ -1,36 +1,28 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { scrapeProduct } from "@/lib/firecrawl";
 import { sendPriceDropAlert } from "@/lib/email";
 
-export async function GET() {
-  return NextResponse.json({
-    message: "Cron endpoint is live",
-  });
-}
-
 export async function POST(request) {
   try {
-    /* -------------------- AUTH CHECK -------------------- */
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    /* -------------------- SUPABASE CLIENT -------------------- */
-    const supabase = await createClient();
+    // Use service role to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
-    /* -------------------- FETCH PRODUCTS -------------------- */
-    const { data: products, error } = await supabase
+    const { data: products, error: productsError } = await supabase
       .from("products")
       .select("*");
 
-    if (error) throw error;
+    if (productsError) throw productsError;
 
     console.log(`Found ${products.length} products to check`);
 
@@ -42,22 +34,18 @@ export async function POST(request) {
       alertsSent: 0,
     };
 
-    /* -------------------- PROCESS EACH PRODUCT -------------------- */
     for (const product of products) {
       try {
         const productData = await scrapeProduct(product.url);
 
-        if (!productData?.currentPrice) {
+        if (!productData.currentPrice) {
           results.failed++;
           continue;
         }
 
-        const newPrice = parseFloat(
-          productData.currentPrice.replace(/[^0-9.-]+/g, "")
-        );
+        const newPrice = parseFloat(productData.currentPrice);
         const oldPrice = parseFloat(product.current_price);
 
-        /* -------------------- UPDATE PRODUCT -------------------- */
         await supabase
           .from("products")
           .update({
@@ -69,8 +57,7 @@ export async function POST(request) {
           })
           .eq("id", product.id);
 
-        /* -------------------- PRICE CHANGE -------------------- */
-        if (newPrice !== oldPrice) {
+        if (oldPrice !== newPrice) {
           await supabase.from("price_history").insert({
             product_id: product.id,
             price: newPrice,
@@ -79,12 +66,10 @@ export async function POST(request) {
 
           results.priceChanges++;
 
-          /* -------------------- PRICE DROP EMAIL -------------------- */
           if (newPrice < oldPrice) {
-            const { data: userData } =
-              await supabase.auth.admin.getUserById(product.user_id);
-
-            const user = userData?.user;
+            const {
+              data: { user },
+            } = await supabase.auth.admin.getUserById(product.user_id);
 
             if (user?.email) {
               const emailResult = await sendPriceDropAlert(
@@ -94,7 +79,7 @@ export async function POST(request) {
                 newPrice
               );
 
-              if (emailResult?.success) {
+              if (emailResult.success) {
                 results.alertsSent++;
               }
             }
@@ -102,26 +87,25 @@ export async function POST(request) {
         }
 
         results.updated++;
-      } catch (err) {
-        console.error(
-          `Error processing product ${product.id}:`,
-          err
-        );
+      } catch (error) {
+        console.error(`Error processing product ${product.id}:`, error);
         results.failed++;
       }
     }
 
-    /* -------------------- RESPONSE -------------------- */
     return NextResponse.json({
       success: true,
       message: "Price check completed",
       results,
     });
-  } catch (err) {
-    console.error("Cron job failed:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("Cron job error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: "Price check endpoint is working. Use POST to trigger.",
+  });
 }
