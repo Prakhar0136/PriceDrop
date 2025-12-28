@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { redirect, revalidatePath } from "next/navigation";
+import { redirect } from "next/navigation";
+import {revalidatePath} from "next/cache";
 import { scrapeProduct } from "@/lib/firecrawl";
 
 
