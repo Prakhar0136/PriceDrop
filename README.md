@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+PriceLens – Product Price Tracker App
 
-## Getting Started
 
-First, run the development server:
+PriceLens is a modern web application that allows users to track product prices over time and get notified when prices drop. It helps users make smarter buying decisions by monitoring prices automatically.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Features:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+User authentication using email
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Add products by pasting product URLs
 
-## Learn More
+Automatically fetch product name, price, currency, and image
 
-To learn more about Next.js, take a look at the following resources:
+Track price changes over time
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Email notifications when a price drops
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Dashboard to view all tracked products
 
-## Deploy on Vercel
+Fully deployed on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Clean and responsive UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+Tech Stack:
+
+Frontend:
+
+Next.js (App Router)
+
+React
+
+Tailwind CSS
+
+
+Backend:
+
+Next.js Server Actions
+
+Supabase (Auth + Database)
+
+
+Services:
+
+Firecrawl API (for product scraping)
+
+Resend (for email notifications)
+
+Vercel (deployment)
+
+
+
+How It Works
+
+User signs up or logs in using email
+
+User pastes a product URL
+
+PriceLens scrapes product details automatically
+
+Product price is stored in the database
+
+Background price checks compare old and new prices
+
+If a price drop is detected, an email alert is sent
+
+
+
+Environment Variables
+
+Create a .env.local file in the root directory and add:
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+FIRECRAWL_API_KEY=your_firecrawl_api_key
+RESEND_API_KEY=your_resend_api_key
+
+Do not commit .env.local to GitHub.
+
+
+
+Deployment
+
+The project is deployed using Vercel.
+
+Steps:
+
+Push code to GitHub
+
+Import repository into Vercel
+
+Add environment variables in Vercel dashboard
+
+Deploy
+
+
+
+Security Notes
+
+.env files are ignored using .gitignore
+
+Sensitive keys are never exposed to the client
+
+Server-only logic is handled using "use server"
+
+
+
+Future Improvements
+
+Browser extension
+
+Mobile-friendly PWA version
+
+Telegram / WhatsApp alerts
+
+
+
+Project Status
+
+Completed and successfully deployed 
+
+
+
+Author: Prakhar Shakya
+
+Author
+
+Built by Prakhar Shakya
